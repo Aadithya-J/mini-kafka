@@ -8,17 +8,12 @@ import (
 	"net"
 )
 
-type ApiKey struct {
-	Apikey     int
-	MinVersion int
-	MaxVersion int
-}
-
 func handleConn(conn net.Conn) {
 	defer conn.Close()
 
 	fmt.Println("Client connected:", conn.RemoteAddr())
 	buf := make([]byte, 4)
+
 	for {
 		_, err := io.ReadFull(conn, buf)
 		if err != nil {
@@ -75,6 +70,33 @@ func handleConn(conn net.Conn) {
 				return
 			}
 			continue
+		}
+		//api key 0 => PRODUCE request
+		if apiKey == 0 {
+			produceReq := msg[8:]
+
+			p := bytes.NewReader(produceReq)
+
+			clientIdLen := must(readInt16(p))
+			if clientIdLen != -1 {
+				clientId := must(readBytes(p, int32(clientIdLen)))
+				fmt.Println("Client ID : ", string(clientId))
+			}
+
+			req := ParseProduceRequest(p)
+			
+			if req.Acks == 0 {
+				continue
+			} else {
+				// have to send response
+				resp := new(bytes.Buffer)
+				write32(resp, int32(correlationId))
+				write32(resp, int32(len(req.Topics)))
+				for _, topic := req.Topics {
+					
+				}
+			}
+
 		}
 		res := make([]byte, 8)
 		binary.BigEndian.PutUint32(res[:4], 4)
