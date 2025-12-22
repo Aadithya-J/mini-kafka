@@ -26,6 +26,7 @@ func handleConn(conn net.Conn) {
 		_, err = io.ReadFull(conn, msg)
 		if err != nil {
 			fmt.Println("Error reading message from client", err)
+			return
 		}
 		apiKey := binary.BigEndian.Uint16(msg[:2])
 		apiVersion := binary.BigEndian.Uint16(msg[2:4])
@@ -84,28 +85,37 @@ func handleConn(conn net.Conn) {
 			}
 
 			req := ParseProduceRequest(p)
-			
+
 			if req.Acks == 0 {
 				continue
 			} else {
 				// have to send response
 				resp := new(bytes.Buffer)
-				write32(resp, int32(correlationId))
-				write32(resp, int32(len(req.Topics)))
-				for _, topic := req.Topics {
-					
+				writeInt32(resp, int32(correlationId))
+				writeInt32(resp, int32(len(req.Topics)))
+				for _, topic := range req.Topics {
+					writeInt16(resp, int16(len(topic.TopicName)))
+					resp.Write([]byte(topic.TopicName))
+					writeInt32(resp, int32(len(topic.Partitions)))
+					for _, partition := range topic.Partitions {
+						writeInt32(resp, partition.PartitionId)
+						writeInt16(resp, 0)
+						writeInt64(resp, 0)
+					}
 				}
-			}
+				size := resp.Len()
+				frameByte := new(bytes.Buffer)
+				binary.Write(frameByte, binary.BigEndian, int32(size))
+				must(conn.Write(frameByte.Bytes()))
+				must(conn.Write(resp.Bytes()))
 
+				continue
+			}
 		}
 		res := make([]byte, 8)
 		binary.BigEndian.PutUint32(res[:4], 4)
 		binary.BigEndian.PutUint32(res[4:], correlationId)
-		_, err = conn.Write(res)
-		if err != nil {
-			fmt.Println("Error writing to client", err)
-			return
-		}
+		must(conn.Write(res))
 	}
 }
 
