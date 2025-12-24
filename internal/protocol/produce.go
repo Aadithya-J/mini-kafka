@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"hash/crc32"
 
 	storage "github.com/Aadithya-J/mini-kafka/internal/storage"
 )
@@ -16,8 +17,8 @@ const (
 	maxMessageSetSize     = 10 * 1024 * 1024
 )
 
-func handleProduceRequest(header RequestHeader, msg *bytes.Reader) ([]byte, error) {
-	req, err := parseProduceRequest(msg)
+func handleProduceRequest(header RequestHeader, r *bytes.Reader) ([]byte, error) {
+	req, err := parseProduceRequest(r)
 	if err != nil {
 		return nil, fmt.Errorf("parse produce request: %w", err)
 	}
@@ -35,6 +36,32 @@ func handleProduceRequest(header RequestHeader, msg *bytes.Reader) ([]byte, erro
 		resp.Write([]byte(topic.TopicName))
 		writeInt32(resp, int32(len(topic.Partitions)))
 		for _, partition := range topic.Partitions {
+
+			// crc check
+			r := bytes.NewReader(partition.MessageSet)
+
+			for r.Len() > 0 {
+				// TOOD: Offset handling
+				_, err := readInt64(r)
+				if err != nil {
+					return nil, err
+				}
+				size, err := readInt32(r)
+				if err != nil {
+					return nil, err
+				}
+
+				msg, err := readBytes(r, size)
+				if err != nil {
+					return nil, err
+				}
+
+				stored := binary.BigEndian.Uint32(msg[:4])
+				computed := crc32.ChecksumIEEE(msg[4:])
+				if stored != computed {
+					return nil, fmt.Errorf("Error corrupted message")
+				}
+			}
 
 			buf := new(bytes.Buffer)
 
