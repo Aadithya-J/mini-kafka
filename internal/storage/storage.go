@@ -14,7 +14,10 @@ func saveData(topic string, partition int32, data []byte) error {
 	}
 	defer f.Close()
 
-	n := must(f.Write(data))
+	n,err := f.Write(data)
+	if err != nil {
+		log.Println("o")
+	}
 	fmt.Printf("Wrote %d bytes to file\n", n)
 	return nil
 }

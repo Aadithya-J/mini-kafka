@@ -1,3 +1,3 @@
-module github.com/Aadithya-J/mini-kafka.git
+module github.com/Aadithya-J/mini-kafka
 
 go 1.24.4

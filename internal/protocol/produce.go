@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"fmt"
+	"log"
 )
 
 func ParseProduceRequest(p *bytes.Reader) ProduceRequest {
@@ -11,7 +11,7 @@ func ParseProduceRequest(p *bytes.Reader) ProduceRequest {
 	if transactionalIdLen != -1 {
 		s := string(must(readBytes(p, int32(transactionalIdLen))))
 		req.TransactionalId = &s
-		fmt.Println("TransactionalId:", s)
+		log.Println("TransactionalId:", s)
 	}
 	req.Acks = must(readInt16(p))
 	req.Timeout = must(readInt32(p))
@@ -20,7 +20,7 @@ func ParseProduceRequest(p *bytes.Reader) ProduceRequest {
 	for i := 0; i < int(TopicArrayLength); i++ {
 		topicNameLen := must(readInt16(p))
 		req.Topics[i].TopicName = string(must(readBytes(p, int32(topicNameLen))))
-		fmt.Println("Topic Name:", req.Topics[i].TopicName)
+		// log.Println("Topic Name:", req.Topics[i].TopicName)
 		M := must(readInt32(p))
 		req.Topics[i].Partitions = make([]PartitionData, M)
 		for j := 0; j < int(M); j++ {
@@ -28,7 +28,7 @@ func ParseProduceRequest(p *bytes.Reader) ProduceRequest {
 			messageSetSize := must(readInt32(p))
 			req.Topics[i].Partitions[j].MessageSet = must(readBytes(p, messageSetSize))
 			//not parsing message set for now
-			fmt.Println(
+			log.Println(
 				"Partition ID, MessageSetSize, MessageSetLen:",
 				req.Topics[i].Partitions[j].PartitionId,
 				messageSetSize,
