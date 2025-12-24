@@ -34,8 +34,8 @@ func (s *Server) Start(cfg config.Config) error {
 	}
 	s.running = true
 	s.mu.Unlock()
-
-	lis, err := net.Listen("tcp", cfg.Port)
+	addr :=  ":" + cfg.Port
+	lis, err := net.Listen("tcp",addr)
 
 	if err != nil {
 		return err
