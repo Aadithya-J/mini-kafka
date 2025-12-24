@@ -6,7 +6,7 @@ import (
 )
 
 type RequestHeader struct {
-	ApiKey        int16
+	ApiKey        ApiKey
 	ApiVersion    int16
 	CorrelationId int32
 	ClientId      []byte
@@ -38,16 +38,10 @@ func parseRequestHeader(r *bytes.Reader) (RequestHeader, error) {
 		if err != nil {
 			return RequestHeader{}, fmt.Errorf("read ClientId: %w", err)
 		}
-	} else {
-
 	}
-	// if clientIdLen != -1 {
-	// 	clientId := must(readBytes(msg, int32(clientIdLen)))
-	// 	fmt.Println("Client ID : ", string(clientId))
-	// }
 
 	return RequestHeader{
-		ApiKey:        apiKey,
+		ApiKey:        ApiKey(apiKey),
 		ApiVersion:    apiVersion,
 		CorrelationId: correlationId,
 		ClientId:      clientId,

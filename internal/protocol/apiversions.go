@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 )
 
-type ApiKey struct {
+type ApiKeyResponse struct {
 	Apikey     int
 	MinVersion int
 	MaxVersion int
@@ -18,7 +18,7 @@ func handleApiVersionsRequest(header RequestHeader) ([]byte, error) {
 	binary.Write(buf, binary.BigEndian, int32(header.CorrelationId))
 	binary.Write(buf, binary.BigEndian, int16(0))
 
-	apiKeys := []ApiKey{
+	apiKeys := []ApiKeyResponse{
 		{Apikey: 18, MinVersion: 0, MaxVersion: 4},
 	}
 	apiKeyLen := len(apiKeys)

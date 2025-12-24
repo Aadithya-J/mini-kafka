@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/binary"
+	"io"
 	"net"
 
 	protocol "github.com/Aadithya-J/mini-kafka/internal/protocol"
@@ -11,15 +12,6 @@ import (
 func (s *Server) HandleConn(ctx context.Context, conn net.Conn) {
 	defer s.wg.Done()
 	defer conn.Close()
-
-	connCtx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	go func() {
-		<-connCtx.Done()
-		conn.Close()
-	}()
-	//will need in future maybe
 
 	for {
 		msg, err := readFrame(conn)
@@ -30,14 +22,29 @@ func (s *Server) HandleConn(ctx context.Context, conn net.Conn) {
 		if err != nil {
 			return
 		}
+		// in case of ack == 0
+		if resp == nil {
+			continue
+		}
 		size := len(resp)
 		var sizeBuf [4]byte
 		binary.BigEndian.PutUint32(sizeBuf[:], uint32(size))
-		_, err = conn.Write(sizeBuf[:])
-		_, err = conn.Write(resp)
-		if err != nil {
+		if err := writeAll(conn, sizeBuf[:]); err != nil {
+			return
+		}
+		if err := writeAll(conn, resp); err != nil {
 			return
 		}
 	}
 }
 
+func writeAll(w io.Writer, buf []byte) error {
+	for len(buf) > 0 {
+		n, err := w.Write(buf)
+		if err != nil {
+			return err
+		}
+		buf = buf[n:]
+	}
+	return nil
+}
