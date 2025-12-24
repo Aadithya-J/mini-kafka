@@ -1,4 +1,4 @@
-package main
+package storage
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func saveData(topic string, partition int32, data []byte) error {
+func SaveData(topic string, partition int32, data []byte) error {
 	fileName := fmt.Sprintf("%s-%d.log", topic, partition)
 	fmt.Println(fileName)
 	f, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)

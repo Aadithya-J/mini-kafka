@@ -3,7 +3,44 @@ package protocol
 import (
 	"bytes"
 	"log"
+	storage "github.com/Aadithya-J/mini-kafka/internal/storage"
 )
+// put in request header
+			// clientIdLen := must(readInt16(msg))
+			// if clientIdLen != -1 {
+			// 	clientId := must(readBytes(msg, int32(clientIdLen)))
+			// 	fmt.Println("Client ID : ", string(clientId))
+			// }
+
+func handleProduceRequest(header RequestHeader, msg *bytes.Reader) ([]byte, error) {
+
+	req := parseProduceRequest(msg)
+	if req.Acks == 0{
+		return nil,nil
+	} else {
+
+	}
+	// have to send response
+	resp := new(bytes.Buffer)
+	writeInt32(resp, int32(header.CorrelationId))
+	writeInt32(resp, int32(len(req.Topics)))
+	for _, topic := range req.Topics {
+		writeInt16(resp, int16(len(topic.TopicName)))
+		resp.Write([]byte(topic.TopicName))
+		writeInt32(resp, int32(len(topic.Partitions)))
+		for _, partition := range topic.Partitions {
+			err := storage.SaveData(topic.TopicName, partition.PartitionId, partition.MessageSet)
+			writeInt32(resp, partition.PartitionId)
+			if err != nil {
+				writeInt16(resp, 10)
+			} else {
+				writeInt16(resp, 0)
+			}
+			writeInt64(resp, 0)
+		}
+	}
+	return resp.Bytes(),nil
+}
 
 func parseProduceRequest(p *bytes.Reader) ProduceRequest {
 	req := ProduceRequest{}
@@ -52,3 +89,4 @@ func parseProduceRequest(p *bytes.Reader) ProduceRequest {
 	}
 	return req
 }
+
