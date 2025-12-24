@@ -1,11 +1,5 @@
 package protocol
 
-type ApiKey struct {
-	Apikey     int
-	MinVersion int
-	MaxVersion int
-}
-
 type ProduceRequest struct {
 	TransactionalId *string
 	Acks            int16
