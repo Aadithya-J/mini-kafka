@@ -2,6 +2,7 @@ package protocol
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 
 	storage "github.com/Aadithya-J/mini-kafka/internal/storage"
@@ -34,8 +35,20 @@ func handleProduceRequest(header RequestHeader, msg *bytes.Reader) ([]byte, erro
 		resp.Write([]byte(topic.TopicName))
 		writeInt32(resp, int32(len(topic.Partitions)))
 		for _, partition := range topic.Partitions {
-			// TODO: maybe asynchronous not sure
-			err := storage.SaveData(topic.TopicName, partition.PartitionId, partition.MessageSet)
+
+			buf := new(bytes.Buffer)
+
+			// TODO offset
+			binary.Write(buf, binary.BigEndian, int64(0))
+
+			// message size
+			binary.Write(buf, binary.BigEndian, int32(len(partition.MessageSet)))
+
+			// message
+			buf.Write(partition.MessageSet)
+
+			err = storage.AppendLog(topic.TopicName, partition.PartitionId, buf.Bytes())
+
 			writeInt32(resp, partition.PartitionId)
 			if err != nil {
 				writeInt16(resp, 10)
