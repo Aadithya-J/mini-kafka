@@ -5,6 +5,8 @@ import (
 	"errors"
 	"net"
 	"sync"
+	"github.com/Aadithya-J/mini-kafka/internal/config"
+	
 )
 
 type Server struct {
@@ -24,7 +26,7 @@ func NewServer() *Server {
 	}
 }
 
-func (s *Server) Start(addr string) error {
+func (s *Server) Start(cfg config.Config) error {
 	s.mu.Lock()
 	if s.running {
 		s.mu.Unlock()
@@ -33,7 +35,7 @@ func (s *Server) Start(addr string) error {
 	s.running = true
 	s.mu.Unlock()
 
-	lis, err := net.Listen("tcp", addr)
+	lis, err := net.Listen("tcp", cfg.Port)
 
 	if err != nil {
 		return err
@@ -55,7 +57,7 @@ func (s *Server) acceptLoop() {
 			}
 		}
 		s.wg.Add(1)
-		go s.handleConn(s.ctx, conn)
+		go s.HandleConn(s.ctx, conn)
 	}
 }
 
