@@ -3,10 +3,11 @@ package server
 import (
 	"context"
 	"errors"
+	"log"
 	"net"
 	"sync"
+
 	"github.com/Aadithya-J/mini-kafka/internal/config"
-	
 )
 
 type Server struct {
@@ -34,12 +35,13 @@ func (s *Server) Start(cfg config.Config) error {
 	}
 	s.running = true
 	s.mu.Unlock()
-	addr :=  ":" + cfg.Port
-	lis, err := net.Listen("tcp",addr)
+	addr := ":" + cfg.Port
+	lis, err := net.Listen("tcp", addr)
 
 	if err != nil {
 		return err
 	}
+	log.Println("server listening on ", addr)
 	s.lis = lis
 	go s.acceptLoop()
 	return nil

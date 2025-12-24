@@ -9,7 +9,7 @@ func ProcessFrame(msg []byte) ([]byte, error) {
 	r := bytes.NewReader(msg)
 	reqHeader, err := parseRequestHeader(r)
 	if err != nil {
-		return nil, fmt.Errorf("Error parsing request header: %v", err)
+		return nil, fmt.Errorf("Error parsing request header: %w", err)
 	}
 	switch reqHeader.ApiKey {
 	case 18:
@@ -20,4 +20,3 @@ func ProcessFrame(msg []byte) ([]byte, error) {
 		return nil, fmt.Errorf("Unsupported Api Key")
 	}
 }
-

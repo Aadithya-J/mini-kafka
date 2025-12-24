@@ -3,20 +3,15 @@ package protocol
 import (
 	"bytes"
 	"log"
+
 	storage "github.com/Aadithya-J/mini-kafka/internal/storage"
 )
-// put in request header
-			// clientIdLen := must(readInt16(msg))
-			// if clientIdLen != -1 {
-			// 	clientId := must(readBytes(msg, int32(clientIdLen)))
-			// 	fmt.Println("Client ID : ", string(clientId))
-			// }
 
 func handleProduceRequest(header RequestHeader, msg *bytes.Reader) ([]byte, error) {
 
 	req := parseProduceRequest(msg)
-	if req.Acks == 0{
-		return nil,nil
+	if req.Acks == 0 {
+		return nil, nil
 	} else {
 
 	}
@@ -39,17 +34,17 @@ func handleProduceRequest(header RequestHeader, msg *bytes.Reader) ([]byte, erro
 			writeInt64(resp, 0)
 		}
 	}
-	return resp.Bytes(),nil
+	return resp.Bytes(), nil
 }
 
 func parseProduceRequest(p *bytes.Reader) ProduceRequest {
 	req := ProduceRequest{}
-	transactionalIdLen,err := readInt16(p)
+	transactionalIdLen, err := readInt16(p)
 	if err != nil {
 		panic(err)
 	}
 	if transactionalIdLen != -1 {
-		transactionId,err := readBytes(p,int32(transactionalIdLen))
+		transactionId, err := readBytes(p, int32(transactionalIdLen))
 		if err != nil {
 			panic(err)
 		}
@@ -57,27 +52,27 @@ func parseProduceRequest(p *bytes.Reader) ProduceRequest {
 		req.TransactionalId = &s
 		log.Println("TransactionalId:", s)
 	}
-	req.Acks,err = readInt16(p)
-	req.Timeout,err = readInt32(p)
-	TopicArrayLength,err :=readInt32(p)
+	req.Acks, err = readInt16(p)
+	req.Timeout, err = readInt32(p)
+	TopicArrayLength, err := readInt32(p)
 	req.Topics = make([]TopicData, TopicArrayLength)
 	for i := 0; i < int(TopicArrayLength); i++ {
-		topicNameLen,err := readInt16(p)
+		topicNameLen, err := readInt16(p)
 		if err != nil {
 			panic(err)
 		}
-		topicname,err := readBytes(p,int32(topicNameLen))
+		topicname, err := readBytes(p, int32(topicNameLen))
 		req.Topics[i].TopicName = string(topicname)
 		// log.Println("Topic Name:", req.Topics[i].TopicName)
-		M,err := readInt32(p)
+		M, err := readInt32(p)
 		req.Topics[i].Partitions = make([]PartitionData, M)
 		for j := 0; j < int(M); j++ {
-			req.Topics[i].Partitions[j].PartitionId,err = readInt32(p)
-			messageSetSize,err := readInt32(p)
+			req.Topics[i].Partitions[j].PartitionId, err = readInt32(p)
+			messageSetSize, err := readInt32(p)
 			if err != nil {
 				panic(err)
 			}
-			req.Topics[i].Partitions[j].MessageSet,err = readBytes(p, messageSetSize)
+			req.Topics[i].Partitions[j].MessageSet, err = readBytes(p, messageSetSize)
 			//not parsing message set for now
 			log.Println(
 				"Partition ID, MessageSetSize, MessageSetLen:",
@@ -89,4 +84,3 @@ func parseProduceRequest(p *bytes.Reader) ProduceRequest {
 	}
 	return req
 }
-
